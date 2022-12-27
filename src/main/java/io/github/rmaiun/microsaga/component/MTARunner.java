@@ -8,22 +8,22 @@ import io.github.rmaiun.microsaga.util.Utils;
  * Original creado por Roman Maiun
  * Modificado por Christian Candela
  */
-public class SagaRunner<A> {
+public class MTARunner<A> {
 
-  private final SagaTransactor sagaTransactor;
+  private final MTATransactor transactor;
   private String id;
-  private MTA<A> saga;
+  private MTA<A> mta;
 
-  public SagaRunner(SagaTransactor sagaTransactor) {
-    this.sagaTransactor = sagaTransactor;
+  public MTARunner(MTATransactor transactor) {
+    this.transactor = transactor;
     this.id = Utils.INSTANCE.defaultId();
   }
 
   public EvaluationResult<A> transact() {
-    return sagaTransactor.transact(id, saga);
+    return transactor.transact(id, mta);
   }
 
-  public SagaRunner<A> withId(String id) {
+  public MTARunner<A> withId(String id) {
     this.id = id;
     return this;
   }
@@ -36,15 +36,15 @@ public class SagaRunner<A> {
     this.id = name;
   }
 
-  public MTA<A> getSaga() {
-    return saga;
+  public MTA<A> getMta() {
+    return mta;
   }
 
-  public void setSaga(MTA<A> saga) {
-    this.saga = saga;
+  public void setMta(MTA<A> mta) {
+    this.mta = mta;
   }
 
-  public SagaTransactor getSagaTransactor() {
-    return sagaTransactor;
+  public MTATransactor getTransactor() {
+    return transactor;
   }
 }

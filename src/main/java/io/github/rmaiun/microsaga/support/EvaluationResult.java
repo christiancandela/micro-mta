@@ -1,9 +1,12 @@
 package io.github.rmaiun.microsaga.support;
 
-import io.github.rmaiun.microsaga.exception.SagaAdaptedException;
+import io.github.rmaiun.microsaga.exception.MTAAdaptedException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
+/**
+ * Original creado por Roman Maiun
+ * Modificado por Christian Candela
+ */
 public class EvaluationResult<A> {
 
   private final A value;
@@ -105,7 +108,7 @@ public class EvaluationResult<A> {
       } catch (RuntimeException t) {
         return new EvaluationResult<>(null, this.evaluationHistory, t);
       } catch (Throwable t) {
-        return new EvaluationResult<>(null, this.evaluationHistory, new SagaAdaptedException(t));
+        return new EvaluationResult<>(null, this.evaluationHistory, new MTAAdaptedException(t));
       }
     } else {
       return this;

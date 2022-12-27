@@ -6,7 +6,7 @@ import io.github.rmaiun.microsaga.support.EvaluationResult;
  * Original creado por Roman Maiun
  * Modificado por Christian Candela
  */
-public interface SagaTransactor {
+public interface MTATransactor {
 
-  <A> EvaluationResult<A> transact(String sagaName, MTA<A> saga);
+  <A> EvaluationResult<A> transact(String name, MTA<A> mta);
 }

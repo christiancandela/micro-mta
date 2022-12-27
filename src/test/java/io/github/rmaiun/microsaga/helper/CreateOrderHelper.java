@@ -1,7 +1,7 @@
 package io.github.rmaiun.microsaga.helper;
 
 import io.github.rmaiun.microsaga.Sagas;
-import io.github.rmaiun.microsaga.component.SagaManager;
+import io.github.rmaiun.microsaga.component.MTAManager;
 import io.github.rmaiun.microsaga.dto.CreateOrderDto;
 import io.github.rmaiun.microsaga.dto.PaymentRequest;
 import io.github.rmaiun.microsaga.dto.ProductOrder;
@@ -46,7 +46,7 @@ public class CreateOrderHelper {
     SagaStep<NoResult> deliverySagaPart = Sagas.action("registerDelivery", () -> deliveryService.registerDelivery(dto.getPerson()))
         .withoutCompensation();
 
-    new SagaManager()
+    new MTAManager()
         .saga(orderSagaPart.then(paymentSagaPart).then(deliverySagaPart))
         .withId("testSaga")
         .transact()
@@ -67,7 +67,7 @@ public class CreateOrderHelper {
         .compensate(Sagas.compensation("failedDeliveryBusinessLog",
             () -> businessLogger.createBusinessLog("Delivery planning was failed for user " + dto.getPerson())));
 
-    EvaluationResult<NoResult> result = new SagaManager()
+    EvaluationResult<NoResult> result = new MTAManager()
         .saga(orderSagaPart.then(paymentSagaPart).then(deliverySagaPart))
         .withId("testSaga")
         .transact();
@@ -89,7 +89,7 @@ public class CreateOrderHelper {
         .compensate(Sagas.compensation("failedDeliveryBusinessLog",
             () -> businessLogger.createBusinessLog("Delivery planning was failed for user " + dto.getPerson())));
 
-    EvaluationResult<NoResult> result = new SagaManager()
+    EvaluationResult<NoResult> result = new MTAManager()
         .saga(orderSagaPart.then(paymentSagaPart).then(deliverySagaPart))
         .withId("testSaga")
         .transact();
@@ -111,7 +111,7 @@ public class CreateOrderHelper {
         .compensate(Sagas.compensation("failedDeliveryBusinessLog",
             () -> businessLogger.createBusinessLog("Delivery planning was failed for user " + dto.getPerson())));
 
-    EvaluationResult<NoResult> result = new SagaManager()
+    EvaluationResult<NoResult> result = new MTAManager()
         .saga(orderSagaPart.then(paymentSagaPart).then(deliverySagaPart))
         .withId("testSaga")
         .transact();

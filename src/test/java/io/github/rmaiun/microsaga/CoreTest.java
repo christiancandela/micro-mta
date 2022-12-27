@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.rmaiun.microsaga.component.SagaManager;
-import io.github.rmaiun.microsaga.exception.SagaActionFailedException;
-import io.github.rmaiun.microsaga.exception.SagaCompensationFailedException;
+import io.github.rmaiun.microsaga.component.MTAManager;
+import io.github.rmaiun.microsaga.exception.MTAActionFailedException;
+import io.github.rmaiun.microsaga.exception.MTACompensationFailedException;
 import io.github.rmaiun.microsaga.saga.Saga;
 import io.github.rmaiun.microsaga.saga.SagaAction;
 import io.github.rmaiun.microsaga.saga.SagaStep;
@@ -34,7 +34,7 @@ public class CoreTest {
 
     Saga<String> intToString = incrementStep
         .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation());
-    EvaluationResult<String> result = SagaManager.use(intToString).transact();
+    EvaluationResult<String> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
     assertTrue(result.isSuccess());
     assertNotNull(result.getValue());
@@ -50,7 +50,7 @@ public class CoreTest {
     Saga<Integer> intToString = incrementStep
         .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
         .map(str -> str.split("=").length);
-    EvaluationResult<Integer> result = SagaManager.use(intToString).transact();
+    EvaluationResult<Integer> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
     assertTrue(result.isSuccess());
     assertNotNull(result.getValue());
@@ -74,10 +74,10 @@ public class CoreTest {
     Saga<Integer> intToString = incrementStep
         .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
         .map(str -> str.split("=").length);
-    EvaluationResult<Integer> result = SagaManager.use(intToString).transact();
+    EvaluationResult<Integer> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
     assertFalse(result.isSuccess());
-    assertEquals(SagaActionFailedException.class, result.getError().getClass());
+    assertEquals(MTAActionFailedException.class, result.getError().getClass());
   }
 
   @Test
@@ -98,10 +98,10 @@ public class CoreTest {
     Saga<Integer> intToString = incrementStep
         .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
         .map(str -> str.split("=").length);
-    EvaluationResult<Integer> result = SagaManager.use(intToString).transact();
+    EvaluationResult<Integer> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
     assertFalse(result.isSuccess());
-    assertEquals(SagaCompensationFailedException.class, result.getError().getClass());
+    assertEquals(MTACompensationFailedException.class, result.getError().getClass());
   }
 
   @Test
@@ -114,7 +114,7 @@ public class CoreTest {
         .then(Sagas.action("intToString", () -> String.format("int=%d", 1)).withoutCompensation())
         .then(Sagas.action("intToString", () -> String.format("int=%d", 2)).withoutCompensation())
         .then(Sagas.action("intToString", () -> String.format("int=%d", 3)).withoutCompensation());
-    EvaluationResult<String> result = SagaManager.use(intToString).transact();
+    EvaluationResult<String> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
     assertTrue(result.isSuccess());
     assertNotNull(result.getValue());
@@ -129,7 +129,7 @@ public class CoreTest {
     Saga<Integer> intToString = incrementStep
         .zipWith(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation(), (a, b) -> a)
         .flatmap(a -> Sagas.action("+3", () -> a + 3).withoutCompensation());
-    Integer result = SagaManager.use(intToString).transact().valueOrThrow();
+    Integer result = MTAManager.use(intToString).transact().valueOrThrow();
     assertNotNull(result);
     assertEquals(4, result);
   }
@@ -142,7 +142,7 @@ public class CoreTest {
     Saga<String> intToString = incrementStep
         .zipWith(Sagas.action("intToString", () -> String.format("int=%d", 14)).withoutCompensation(), a -> a + 15)
         .flatmap(a -> Sagas.action("+3", () -> a + 3).withoutCompensation());
-    String result = SagaManager.use(intToString).transact().valueOrThrow();
+    String result = MTAManager.use(intToString).transact().valueOrThrow();
     assertNotNull(result);
     assertEquals("int=14153", result);
   }
@@ -156,7 +156,7 @@ public class CoreTest {
     Saga<String> intToString = incrementStep
         .zipWith(Sagas.action("intToString", () -> String.format("int=%d", 14)).withoutCompensation(), a -> a + 15)
         .flatmap(a -> Sagas.action("+3", () -> a + 3).withoutCompensation());
-    String result = SagaManager.use(intToString).transact()
+    String result = MTAManager.use(intToString).transact()
         .peek(er -> list.add(er.getEvaluationHistory().getEvaluations().size()))
         .valueOrThrow();
     assertNotNull(result);
@@ -173,7 +173,7 @@ public class CoreTest {
       throw new RuntimeException("action#1 failed");
     })
         .compensate("compensation#1", ref::set);
-    EvaluationResult<NoResult> evaluationResult = SagaManager.use(saga).transact();
+    EvaluationResult<NoResult> evaluationResult = MTAManager.use(saga).transact();
     assertNotNull(evaluationResult);
     assertEquals(evaluationResult.getEvaluationHistory().getSagaId(), ref.get());
   }
@@ -186,7 +186,7 @@ public class CoreTest {
       throw new RuntimeException("action#1 failed");
     }, new RetryPolicy<NoResult>().withMaxRetries(2))
         .compensate("compensation#1", ref::decrementAndGet);
-    EvaluationResult<NoResult> evaluationResult = SagaManager.use(saga).transact();
+    EvaluationResult<NoResult> evaluationResult = MTAManager.use(saga).transact();
     assertNotNull(evaluationResult);
     assertTrue(evaluationResult.isError());
     assertEquals(2, ref.get());
@@ -197,7 +197,7 @@ public class CoreTest {
     AtomicReference<String> ref = new AtomicReference<>();
     Saga<NoResult> saga = Sagas.voidAction("a1", ref::set)
         .withoutCompensation();
-    EvaluationResult<NoResult> evaluationResult = SagaManager.use(saga).transact();
+    EvaluationResult<NoResult> evaluationResult = MTAManager.use(saga).transact();
     assertNotNull(evaluationResult);
     assertTrue(evaluationResult.isSuccess());
     assertEquals(evaluationResult.getEvaluationHistory().getSagaId(), ref.get());
@@ -210,7 +210,7 @@ public class CoreTest {
       throw new RuntimeException("action#1 failed");
     })
         .compensate("compensation#1", ref::set, new RetryPolicy<>().withMaxRetries(2));
-    EvaluationResult<NoResult> evaluationResult = SagaManager.use(saga).transact();
+    EvaluationResult<NoResult> evaluationResult = MTAManager.use(saga).transact();
     assertNotNull(evaluationResult);
     String sagaId = evaluationResult.getEvaluationHistory().getSagaId();
     assertEquals(sagaId, ref.get());
@@ -218,8 +218,8 @@ public class CoreTest {
 
   @Test
   public void actionThrowsTest() {
-    assertThrows(SagaActionFailedException.class,
-        () -> SagaManager.use(Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
+    assertThrows(MTAActionFailedException.class,
+        () -> MTAManager.use(Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
             .compensate(Sagas.emptyCompensation("c1")))
             .transact()
             .orElseThrow());
@@ -229,7 +229,7 @@ public class CoreTest {
   public void emptyCompensationTest() {
     Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
         .compensate(Sagas.emptyCompensation("c1"));
-    EvaluationResult<Object> er = SagaManager.use(saga).transact();
+    EvaluationResult<Object> er = MTAManager.use(saga).transact();
     assertEquals(2, er.getEvaluationHistory().getEvaluations().size());
     boolean allEvaluationsPresent = er.getEvaluationHistory().getEvaluations()
         .stream()
@@ -241,15 +241,15 @@ public class CoreTest {
   public void compensationThrowsTest() {
     Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
         .compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
-    EvaluationResult<Object> er = SagaManager.use(saga).transact();
-    assertThrows(SagaCompensationFailedException.class, er::orElseThrow);
+    EvaluationResult<Object> er = MTAManager.use(saga).transact();
+    assertThrows(MTACompensationFailedException.class, er::orElseThrow);
   }
 
   @Test
   public void foldEvaluationResultTest() {
     Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
         .compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
-    String foldEvaluationResult = SagaManager.use(saga)
+    String foldEvaluationResult = MTAManager.use(saga)
         .withId("foldEvaluationResultTest")
         .transact()
         .fold(v -> "no result", Throwable::getMessage);
@@ -260,7 +260,7 @@ public class CoreTest {
   public void adaptErrorTest() {
     Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
         .compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
-    Object foldEvaluationResult = SagaManager.use(saga)
+    Object foldEvaluationResult = MTAManager.use(saga)
         .withId("foldEvaluationResultTest")
         .transact()
         .adaptError(err -> new NoResult())
@@ -273,7 +273,7 @@ public class CoreTest {
     SagaAction<String> action = Sagas.actionThrows("a1", new RuntimeException("action should fail"));
     Saga<String> saga = action.withoutCompensation();
     Function<RuntimeException, String> errorAdopter = err -> {
-      if (err instanceof SagaActionFailedException) {
+      if (err instanceof MTAActionFailedException) {
         return "default result";
       } else {
         throw err;
@@ -281,7 +281,7 @@ public class CoreTest {
     };
     AtomicInteger valueCounter = new AtomicInteger(0);
     AtomicInteger errorCounter = new AtomicInteger(0);
-    String str = SagaManager.use(saga)
+    String str = MTAManager.use(saga)
         .transact()
         .peek(evalRest -> valueCounter.incrementAndGet())
         .peekValue(v -> valueCounter.incrementAndGet())
@@ -304,18 +304,18 @@ public class CoreTest {
     SagaAction<String> action = Sagas.actionThrows("a1", new RuntimeException("action should fail"));
     Saga<String> saga = action.compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation is failed")));
     Function<RuntimeException, String> errorAdopter = err -> {
-      if (err instanceof SagaActionFailedException) {
+      if (err instanceof MTAActionFailedException) {
         return "default result";
       } else {
         throw err;
       }
     };
-    WrongAdoptionError result = assertThrows(WrongAdoptionError.class, () -> SagaManager.use(saga)
+    WrongAdoptionError result = assertThrows(WrongAdoptionError.class, () -> MTAManager.use(saga)
         .transact()
         .adaptError(errorAdopter)
         .valueOrThrow(err -> new WrongAdoptionError("transformed error", err)));
     assertNotNull(result);
     assertEquals("transformed error", result.getMessage());
-    assertEquals(SagaCompensationFailedException.class, result.getCause().getClass());
+    assertEquals(MTACompensationFailedException.class, result.getCause().getClass());
   }
 }
