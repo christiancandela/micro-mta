@@ -1,11 +1,17 @@
 package io.github.rmaiun.microsaga.saga;
 
-public class SagaStep<A> extends Saga<A> {
+import io.github.rmaiun.microsaga.mta.Compensation;
+import io.github.rmaiun.microsaga.mta.Step;
+/**
+ * Original creado por Roman Maiun
+ * Modificado por Christian Candela
+ */
+public class SagaStep<A> extends Saga<A> implements Step<A> {
 
   private final SagaAction<A> action;
-  private final SagaCompensation compensator;
+  private final Compensation compensator;
 
-  public SagaStep(SagaAction<A> action, SagaCompensation compensator) {
+  public SagaStep(SagaAction<A> action, Compensation compensator) {
     this.action = action;
     this.compensator = compensator;
   }
@@ -14,7 +20,7 @@ public class SagaStep<A> extends Saga<A> {
     return action;
   }
 
-  public SagaCompensation getCompensator() {
+  public Compensation getCompensator() {
     return compensator;
   }
 }

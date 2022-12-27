@@ -1,11 +1,18 @@
 package io.github.rmaiun.microsaga.saga;
 
 import io.github.rmaiun.microsaga.func.CheckedFunction;
-import io.github.rmaiun.microsaga.util.SagaUtils;
-import java.util.function.Consumer;
+import io.github.rmaiun.microsaga.mta.Action;
+import io.github.rmaiun.microsaga.mta.Compensation;
+import io.github.rmaiun.microsaga.mta.CompensationBuilder;
+import io.github.rmaiun.microsaga.util.Utils;
 import net.jodah.failsafe.RetryPolicy;
 
-public class SagaAction<A> extends Saga<A> {
+import java.util.function.Consumer;
+/**
+ * Original creado por Roman Maiun
+ * Modificado por Christian Candela
+ */
+public class SagaAction<A> extends Saga<A> implements Action<A> {
 
   private final String name;
   private final RetryPolicy<A> retryPolicy;
@@ -17,28 +24,32 @@ public class SagaAction<A> extends Saga<A> {
     this.retryPolicy = retryPolicy;
   }
 
-  public SagaStep<A> compensate(SagaCompensation compensation) {
+  public SagaStep<A> compensate(Compensation compensation) {
     return new SagaStep<>(this, compensation);
   }
 
   public SagaStep<A> compensate(String name, Runnable compensation) {
-    return new SagaStep<>(this, new SagaCompensation(name, compensation, SagaUtils.defaultRetryPolicy()));
+    return new SagaStep<>(this, CompensationBuilder.create().name(name).compensation(compensation)
+            .retryPolicy(Utils.INSTANCE.defaultNoneRetryPolicy()).build() );
   }
 
   public SagaStep<A> compensate(String name, Runnable compensation, RetryPolicy<Object> retryPolicy) {
-    return new SagaStep<>(this, new SagaCompensation(name, compensation, retryPolicy));
+    return new SagaStep<>(this, CompensationBuilder.create().name(name).compensation(compensation)
+            .retryPolicy(retryPolicy).build() );
   }
 
   public SagaStep<A> compensate(String name, Consumer<String> compensation) {
-    return new SagaStep<>(this, new SagaCompensation(name, compensation, SagaUtils.defaultRetryPolicy()));
+    return new SagaStep<>(this, CompensationBuilder.create().name(name).compensation(compensation)
+            .retryPolicy(Utils.INSTANCE.defaultNoneRetryPolicy()).build() );
   }
 
   public SagaStep<A> compensate(String name, Consumer<String> compensation, RetryPolicy<Object> retryPolicy) {
-    return new SagaStep<>(this, new SagaCompensation(name, compensation, retryPolicy));
+    return new SagaStep<>(this, CompensationBuilder.create().name(name).compensation(compensation)
+            .retryPolicy(retryPolicy).build() );
   }
 
   public SagaStep<A> withoutCompensation() {
-    return new SagaStep<>(this, SagaCompensation.technical());
+    return new SagaStep<>(this, CompensationBuilder.technical().build());
   }
 
   public String getName() {

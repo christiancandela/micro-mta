@@ -76,7 +76,7 @@ public class BuyProductHelper {
     if (er.isError()) {
       LOG.error("Couldn't buy some product", er.getError());
     } else {
-      LOG.info("Saga {} is successfully finished", er.getEvaluationHistory().getSagaId());
+      LOG.info("Nested {} is successfully finished", er.getEvaluationHistory().getSagaId());
     }
   }
 
@@ -111,7 +111,7 @@ public class BuyProductHelper {
     } else {
       String sagaId = invocationList.get(0).getSagaId();
       var found = sagaRepository.findSagaInstanceBySagaId(sagaId)
-          .orElseThrow(() -> new RuntimeException(String.format("Saga with id %s is not found", sagaId)));
+          .orElseThrow(() -> new RuntimeException(String.format("Nested with id %s is not found", sagaId)));
       found.setInvocations(new HashSet<>(invocationList));
       return found;
     }

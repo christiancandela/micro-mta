@@ -40,8 +40,8 @@ public class SagaRecoveryHelper {
         var invocations = sagaInstanceRepository.findSagaInvocations(saga.getSagaId());
         var result = buyProductHelper.buyProduct(dto, invocations);
         var msg = result.fold(
-            res -> String.format("Saga %s is successfully recovered", saga.getSagaId()),
-            err -> String.format("Saga %s recovery is failed with error '%s'", saga.getSagaId(), result.getError().getMessage()));
+            res -> String.format("Nested %s is successfully recovered", saga.getSagaId()),
+            err -> String.format("Nested %s recovery is failed with error '%s'", saga.getSagaId(), result.getError().getMessage()));
         LOG.info(msg);
       });
     }

@@ -1,6 +1,11 @@
 package io.github.rmaiun.microsaga.saga;
 
-public class SagaSuccess<T> extends Saga<T> {
+import io.github.rmaiun.microsaga.mta.Success;
+/**
+ * Original creado por Roman Maiun
+ * Modificado por Christian Candela
+ */
+public class SagaSuccess<T> extends Saga<T> implements Success<T> {
 
   private final T value;
 

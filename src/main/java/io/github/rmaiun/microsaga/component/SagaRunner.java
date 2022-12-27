@@ -1,18 +1,22 @@
 package io.github.rmaiun.microsaga.component;
 
-import io.github.rmaiun.microsaga.saga.Saga;
+import io.github.rmaiun.microsaga.mta.MTA;
 import io.github.rmaiun.microsaga.support.EvaluationResult;
-import io.github.rmaiun.microsaga.util.SagaUtils;
+import io.github.rmaiun.microsaga.util.Utils;
 
+/**
+ * Original creado por Roman Maiun
+ * Modificado por Christian Candela
+ */
 public class SagaRunner<A> {
 
   private final SagaTransactor sagaTransactor;
   private String id;
-  private Saga<A> saga;
+  private MTA<A> saga;
 
   public SagaRunner(SagaTransactor sagaTransactor) {
     this.sagaTransactor = sagaTransactor;
-    this.id = SagaUtils.defaultId();
+    this.id = Utils.INSTANCE.defaultId();
   }
 
   public EvaluationResult<A> transact() {
@@ -32,11 +36,11 @@ public class SagaRunner<A> {
     this.id = name;
   }
 
-  public Saga<A> getSaga() {
+  public MTA<A> getSaga() {
     return saga;
   }
 
-  public void setSaga(Saga<A> saga) {
+  public void setSaga(MTA<A> saga) {
     this.saga = saga;
   }
 
