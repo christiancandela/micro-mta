@@ -1,19 +1,16 @@
 package io.github.rmaiun.microsaga;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import io.github.rmaiun.microsaga.component.MTAManager;
 import io.github.rmaiun.microsaga.exception.MTAActionFailedException;
 import io.github.rmaiun.microsaga.exception.MTACompensationFailedException;
-import io.github.rmaiun.microsaga.saga.Saga;
-import io.github.rmaiun.microsaga.saga.SagaAction;
-import io.github.rmaiun.microsaga.saga.SagaStep;
+import io.github.rmaiun.microsaga.mta.Action;
+import io.github.rmaiun.microsaga.mta.MTA;
+import io.github.rmaiun.microsaga.mta.Step;
 import io.github.rmaiun.microsaga.support.EvaluationResult;
 import io.github.rmaiun.microsaga.support.NoResult;
+import net.jodah.failsafe.RetryPolicy;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,21 +18,21 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import net.jodah.failsafe.RetryPolicy;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 /**
  * Original creado por Roman Maiun
  * Modificado por Christian Candela
  */
-public class CoreTest {
+public class CoreNestedTest {
 
   @Test
   public void flatmapTest() {
     AtomicInteger x = new AtomicInteger();
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
+    Step<Integer> incrementStep = Nesteds.action("initValue", x::incrementAndGet)
         .withoutCompensation();
 
-    Saga<String> intToString = incrementStep
+    MTA<String> intToString = incrementStep
         .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation());
     EvaluationResult<String> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
@@ -47,11 +44,11 @@ public class CoreTest {
   @Test
   public void mapFlatmapTest() {
     AtomicInteger x = new AtomicInteger();
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
+    Step<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
         .withoutCompensation();
 
-    Saga<Integer> intToString = incrementStep
-        .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
+    MTA<Integer> intToString = incrementStep
+        .flatmap(a -> Nesteds.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
         .map(str -> str.split("=").length);
     EvaluationResult<Integer> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
@@ -71,11 +68,11 @@ public class CoreTest {
       }
     };
 
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", throwError)
+    Step<Integer> incrementStep = Nesteds.action("initValue", throwError)
         .compensate("setAtomicIntToZero", () -> x.set(0));
 
-    Saga<Integer> intToString = incrementStep
-        .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
+    MTA<Integer> intToString = incrementStep
+        .flatmap(a -> Nesteds.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
         .map(str -> str.split("=").length);
     EvaluationResult<Integer> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
@@ -93,13 +90,13 @@ public class CoreTest {
         return x.incrementAndGet();
       }
     };
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", throwError)
+    Step<Integer> incrementStep = Nesteds.action("initValue", throwError)
         .compensate("setAtomicIntToZero", () -> {
           throw new RuntimeException("something wrong");
         });
 
-    Saga<Integer> intToString = incrementStep
-        .flatmap(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
+    MTA<Integer> intToString = incrementStep
+        .flatmap(a -> Nesteds.action("intToString", () -> String.format("int=%d", a)).withoutCompensation())
         .map(str -> str.split("=").length);
     EvaluationResult<Integer> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
@@ -110,13 +107,13 @@ public class CoreTest {
   @Test
   public void thenTest() {
     AtomicInteger x = new AtomicInteger();
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
+    Step<Integer> incrementStep = Nesteds.action("initValue", x::incrementAndGet)
         .withoutCompensation();
 
-    Saga<String> intToString = incrementStep
-        .then(Sagas.action("intToString", () -> String.format("int=%d", 1)).withoutCompensation())
-        .then(Sagas.action("intToString", () -> String.format("int=%d", 2)).withoutCompensation())
-        .then(Sagas.action("intToString", () -> String.format("int=%d", 3)).withoutCompensation());
+    MTA<String> intToString = incrementStep
+        .then(Nesteds.action("intToString", () -> String.format("int=%d", 1)).withoutCompensation())
+        .then(Nesteds.action("intToString", () -> String.format("int=%d", 2)).withoutCompensation())
+        .then(Nesteds.action("intToString", () -> String.format("int=%d", 3)).withoutCompensation());
     EvaluationResult<String> result = MTAManager.use(intToString).transact();
     assertNotNull(result);
     assertTrue(result.isSuccess());
@@ -127,11 +124,11 @@ public class CoreTest {
   @Test
   public void zipWithTest1() {
     AtomicInteger x = new AtomicInteger();
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
+    Step<Integer> incrementStep = Nesteds.action("initValue", x::incrementAndGet)
         .withoutCompensation();
-    Saga<Integer> intToString = incrementStep
-        .zipWith(a -> Sagas.action("intToString", () -> String.format("int=%d", a)).withoutCompensation(), (a, b) -> a)
-        .flatmap(a -> Sagas.action("+3", () -> a + 3).withoutCompensation());
+    MTA<Integer> intToString = incrementStep
+        .zipWith(a -> Nesteds.action("intToString", () -> String.format("int=%d", a)).withoutCompensation(), (a, b) -> a)
+        .flatmap(a -> Nesteds.action("+3", () -> a + 3).withoutCompensation());
     Integer result = MTAManager.use(intToString).transact().valueOrThrow();
     assertNotNull(result);
     assertEquals(4, result);
@@ -140,11 +137,11 @@ public class CoreTest {
   @Test
   public void zipWithTest2() {
     AtomicInteger x = new AtomicInteger();
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
+    Step<Integer> incrementStep = Nesteds.action("initValue", x::incrementAndGet)
         .withoutCompensation();
-    Saga<String> intToString = incrementStep
-        .zipWith(Sagas.action("intToString", () -> String.format("int=%d", 14)).withoutCompensation(), a -> a + 15)
-        .flatmap(a -> Sagas.action("+3", () -> a + 3).withoutCompensation());
+    MTA<String> intToString = incrementStep
+        .zipWith(Nesteds.action("intToString", () -> String.format("int=%d", 14)).withoutCompensation(), a -> a + 15)
+        .flatmap(a -> Nesteds.action("+3", () -> a + 3).withoutCompensation());
     String result = MTAManager.use(intToString).transact().valueOrThrow();
     assertNotNull(result);
     assertEquals("int=14153", result);
@@ -154,11 +151,11 @@ public class CoreTest {
   public void evaluationResultFlatTapTest() {
     List<Integer> list = new ArrayList<>();
     AtomicInteger x = new AtomicInteger();
-    SagaStep<Integer> incrementStep = Sagas.action("initValue", x::incrementAndGet)
+    Step<Integer> incrementStep = Nesteds.action("initValue", x::incrementAndGet)
         .withoutCompensation();
-    Saga<String> intToString = incrementStep
-        .zipWith(Sagas.action("intToString", () -> String.format("int=%d", 14)).withoutCompensation(), a -> a + 15)
-        .flatmap(a -> Sagas.action("+3", () -> a + 3).withoutCompensation());
+    MTA<String> intToString = incrementStep
+        .zipWith(Nesteds.action("intToString", () -> String.format("int=%d", 14)).withoutCompensation(), a -> a + 15)
+        .flatmap(a -> Nesteds.action("+3", () -> a + 3).withoutCompensation());
     String result = MTAManager.use(intToString).transact()
         .peek(er -> list.add(er.getEvaluationHistory().getEvaluations().size()))
         .valueOrThrow();
@@ -172,7 +169,7 @@ public class CoreTest {
   @Test
   public void voidActionTest() {
     AtomicReference<String> ref = new AtomicReference<>();
-    SagaStep<NoResult> saga = Sagas.voidAction("action#1", () -> {
+    Step<NoResult> saga = Nesteds.voidAction("action#1", () -> {
       throw new RuntimeException("action#1 failed");
     })
         .compensate("compensation#1", ref::set);
@@ -182,9 +179,23 @@ public class CoreTest {
   }
 
   @Test
+  public void voidRetriableActionTest() {
+    AtomicInteger ref = new AtomicInteger(0);
+    Step<NoResult> saga = Nesteds.voidRetryableAction("action#1", () -> {
+      ref.incrementAndGet();
+      throw new RuntimeException("action#1 failed");
+    }, new RetryPolicy<NoResult>().withMaxRetries(2))
+        .compensate("compensation#1", ref::decrementAndGet);
+    EvaluationResult<NoResult> evaluationResult = MTAManager.use(saga).transact();
+    assertNotNull(evaluationResult);
+    assertTrue(evaluationResult.isError());
+    assertEquals(2, ref.get());
+  }
+
+  @Test
   public void actionConsumesSagaIdTest() {
     AtomicReference<String> ref = new AtomicReference<>();
-    Saga<NoResult> saga = Sagas.voidAction("a1", ref::set)
+    MTA<NoResult> saga = Nesteds.voidAction("a1", ref::set)
         .withoutCompensation();
     EvaluationResult<NoResult> evaluationResult = MTAManager.use(saga).transact();
     assertNotNull(evaluationResult);
@@ -195,7 +206,7 @@ public class CoreTest {
   @Test
   public void repeatableCompensationConsumesSagaIdTest() {
     AtomicReference<String> ref = new AtomicReference<>("");
-    SagaStep<NoResult> saga = Sagas.voidAction("action#1", () -> {
+    Step<NoResult> saga = Nesteds.voidAction("action#1", () -> {
       throw new RuntimeException("action#1 failed");
     })
         .compensate("compensation#1", ref::set, new RetryPolicy<>().withMaxRetries(2));
@@ -208,16 +219,16 @@ public class CoreTest {
   @Test
   public void actionThrowsTest() {
     assertThrows(MTAActionFailedException.class,
-        () -> MTAManager.use(Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
-            .compensate(Sagas.emptyCompensation("c1")))
+        () -> MTAManager.use(Nesteds.actionThrows("a1", new RuntimeException("action a1 is failed"))
+            .compensate(Nesteds.emptyCompensation("c1")))
             .transact()
             .orElseThrow());
   }
 
   @Test
   public void emptyCompensationTest() {
-    Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
-        .compensate(Sagas.emptyCompensation("c1"));
+    MTA<Object> saga = Nesteds.actionThrows("a1", new RuntimeException("action a1 is failed"))
+        .compensate(Nesteds.emptyCompensation("c1"));
     EvaluationResult<Object> er = MTAManager.use(saga).transact();
     assertEquals(2, er.getEvaluationHistory().getEvaluations().size());
     boolean allEvaluationsPresent = er.getEvaluationHistory().getEvaluations()
@@ -228,16 +239,16 @@ public class CoreTest {
 
   @Test
   public void compensationThrowsTest() {
-    Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
-        .compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
+    MTA<Object> saga = Nesteds.actionThrows("a1", new RuntimeException("action a1 is failed"))
+        .compensate(Nesteds.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
     EvaluationResult<Object> er = MTAManager.use(saga).transact();
     assertThrows(MTACompensationFailedException.class, er::orElseThrow);
   }
 
   @Test
   public void foldEvaluationResultTest() {
-    Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
-        .compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
+    MTA<Object> saga = Nesteds.actionThrows("a1", new RuntimeException("action a1 is failed"))
+        .compensate(Nesteds.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
     String foldEvaluationResult = MTAManager.use(saga)
         .withId("foldEvaluationResultTest")
         .transact()
@@ -247,8 +258,8 @@ public class CoreTest {
 
   @Test
   public void adaptErrorTest() {
-    Saga<Object> saga = Sagas.actionThrows("a1", new RuntimeException("action a1 is failed"))
-        .compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
+    MTA<Object> saga = Nesteds.actionThrows("a1", new RuntimeException("action a1 is failed"))
+        .compensate(Nesteds.compensationThrows("c1", new RuntimeException("compensation c1 is failed")));
     Object foldEvaluationResult = MTAManager.use(saga)
         .withId("foldEvaluationResultTest")
         .transact()
@@ -259,8 +270,8 @@ public class CoreTest {
 
   @Test
   public void adoptErrorWithPeekTest() {
-    SagaAction<String> action = Sagas.actionThrows("a1", new RuntimeException("action should fail"));
-    Saga<String> saga = action.withoutCompensation();
+    Action<String> action = Nesteds.actionThrows("a1", new RuntimeException("action should fail"));
+    MTA<String> saga = action.withoutCompensation();
     Function<RuntimeException, String> errorAdopter = err -> {
       if (err instanceof MTAActionFailedException) {
         return "default result";
@@ -290,8 +301,8 @@ public class CoreTest {
         super(message, cause);
       }
     }
-    SagaAction<String> action = Sagas.actionThrows("a1", new RuntimeException("action should fail"));
-    Saga<String> saga = action.compensate(Sagas.compensationThrows("c1", new RuntimeException("compensation is failed")));
+    Action<String> action = Nesteds.actionThrows("a1", new RuntimeException("action should fail"));
+    MTA<String> saga = action.compensate(Nesteds.compensationThrows("c1", new RuntimeException("compensation is failed")));
     Function<RuntimeException, String> errorAdopter = err -> {
       if (err instanceof MTAActionFailedException) {
         return "default result";

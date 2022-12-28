@@ -14,10 +14,12 @@ import io.github.rmaiun.microsaga.support.Evaluation;
 import io.github.rmaiun.microsaga.support.EvaluationHistory;
 import io.github.rmaiun.microsaga.support.EvaluationResult;
 import io.github.rmaiun.microsaga.support.NoResult;
-import net.jodah.failsafe.RetryPolicy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+/**
+ * Original creado por Roman Maiun
+ * Modificado por Christian Candela
+ */
 public class CreateOrderHelper {
 
   private static final Logger LOG = LogManager.getLogger(CreateOrderHelper.class);
@@ -72,51 +74,6 @@ public class CreateOrderHelper {
         .withId("testSaga")
         .transact();
     logSaga(result.getEvaluationHistory());
-  }
-
-  public void createOrdersWithRetryCompensation(CreateOrderDto dto) {
-    SagaStep<ProductOrder> orderSagaPart = Sagas.action("makeOrder", () -> orderService.makeOrder(dto.getProduct()))
-        .compensate(Sagas.compensation("cancelOrder", () -> orderService.cancelOrder(dto.getProduct())));
-
-    SagaStep<NoResult> paymentSagaPart = Sagas
-        .action("processPayment", () -> moneyTransferService.processPayment(new PaymentRequest(dto.getPerson(), 100)))
-        .compensate(Sagas.retryableCompensation("cancelPayment (lagging)",
-            () -> moneyTransferService.processLaggingPayment(new PaymentRequest(dto.getPerson(), -100)),
-            new RetryPolicy<>().withMaxRetries(4)));
-
-    SagaStep<NoResult> deliverySagaPart = Sagas
-        .action("registerDelivery", () -> deliveryService.registerDeliveryWithWrongAddress(dto.getPerson()))
-        .compensate(Sagas.compensation("failedDeliveryBusinessLog",
-            () -> businessLogger.createBusinessLog("Delivery planning was failed for user " + dto.getPerson())));
-
-    EvaluationResult<NoResult> result = new MTAManager()
-        .saga(orderSagaPart.then(paymentSagaPart).then(deliverySagaPart))
-        .withId("testSaga")
-        .transact();
-    logSaga(result.getEvaluationHistory());
-  }
-
-  public EvaluationResult<NoResult> createOrdersWithRetryAction(CreateOrderDto dto) {
-    SagaStep<ProductOrder> orderSagaPart = Sagas.action("makeOrder", () -> orderService.makeOrder(dto.getProduct()))
-        .compensate(Sagas.compensation("cancelOrder", () -> orderService.cancelOrder(dto.getProduct())));
-
-    SagaStep<NoResult> paymentSagaPart = Sagas
-        .retryableAction("processLaggingPayment",
-            () -> moneyTransferService.processLaggingPayment(new PaymentRequest(dto.getPerson(), 100)),
-            new RetryPolicy<NoResult>().withMaxRetries(4))
-        .compensate(Sagas.compensation("cancelPayment (lagging)",
-            () -> moneyTransferService.processPayment(new PaymentRequest(dto.getPerson(), -100))));
-
-    SagaStep<NoResult> deliverySagaPart = Sagas.action("registerDelivery", () -> deliveryService.registerDelivery(dto.getPerson()))
-        .compensate(Sagas.compensation("failedDeliveryBusinessLog",
-            () -> businessLogger.createBusinessLog("Delivery planning was failed for user " + dto.getPerson())));
-
-    EvaluationResult<NoResult> result = new MTAManager()
-        .saga(orderSagaPart.then(paymentSagaPart).then(deliverySagaPart))
-        .withId("testSaga")
-        .transact();
-    logSaga(result.getEvaluationHistory());
-    return result;
   }
 
   private void logSaga(EvaluationHistory evaluationHistory) {

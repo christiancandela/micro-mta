@@ -14,16 +14,16 @@ public class Compensation {
   private final boolean technical;
 
   public Compensation(String name, Runnable compensation) {
-    this(name,sagaId -> compensation.run(),new RetryPolicy<>().withMaxRetries(0),false);
+    this(name,mtaId -> compensation.run(),new RetryPolicy<>().withMaxRetries(0),false);
   }
   public Compensation(String name, Runnable compensation, RetryPolicy<Object> retryPolicy) {
-    this(name,sagaId -> compensation.run(),retryPolicy,false);
+    this(name,mtaId -> compensation.run(),retryPolicy,false);
   }
   public Compensation(String name, Consumer<String> compensation, RetryPolicy<Object> retryPolicy) {
     this(name,compensation,retryPolicy,false);
   }
   public Compensation(String name, Runnable compensation, RetryPolicy<Object> retryPolicy, boolean technical) {
-    this(name,sagaId -> compensation.run(),retryPolicy,technical);
+    this(name,mtaId -> compensation.run(),retryPolicy,technical);
   }
   public Compensation(String name, Consumer<String> compensation, RetryPolicy<Object> retryPolicy, boolean technical) {
     this.name = name;

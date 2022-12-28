@@ -22,7 +22,7 @@ public class SagaTransformedFlatMap<A, B, C> extends Saga<C> implements Transfor
     this.transformer = transformer;
   }
 
-  public Function<A, MTA<B>> getSagaFunc() {
+  public Function<A, MTA<B>> getFunction() {
     return sagaFunc;
   }
 
@@ -30,7 +30,7 @@ public class SagaTransformedFlatMap<A, B, C> extends Saga<C> implements Transfor
     return transformer;
   }
 
-  public StubInputFunction<MTA<A>> getRootSaga() {
+  public StubInputFunction<MTA<A>> getRootMTA() {
     return rootSaga;
   }
 }

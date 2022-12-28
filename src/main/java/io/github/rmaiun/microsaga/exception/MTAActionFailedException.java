@@ -6,6 +6,6 @@ package io.github.rmaiun.microsaga.exception;
 public class MTAActionFailedException extends RuntimeException {
 
   public MTAActionFailedException(String action, String saga, Throwable cause) {
-    super(String.format("Action %s for saga %s is failed", action, saga), cause);
+    super(String.format("Action %s for mta %s is failed", action, saga), cause);
   }
 }

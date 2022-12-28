@@ -56,8 +56,8 @@ public class DefaultMTATransactor implements MTATransactor {
         noError = !current.isError();
       } else if (saga instanceof TransformedFlatMap) {
         TransformedFlatMap<Object, Object, Object> sagaTransFlatMap = (TransformedFlatMap<Object, Object, Object>) saga;
-        mtaDefinitions.add(new FunctionContext(sagaTransFlatMap.getSagaFunc(), sagaTransFlatMap.getTransformer()));
-        mtaDefinitions.add(new FunctionContext(sagaTransFlatMap.getRootSaga()));
+        mtaDefinitions.add(new FunctionContext(sagaTransFlatMap.getFunction(), sagaTransFlatMap.getTransformer()));
+        mtaDefinitions.add(new FunctionContext(sagaTransFlatMap.getRootMTA()));
       } else if (saga instanceof FlatMap) {
         FlatMap<Object, Object> sagaFlatMap = (FlatMap<Object, Object>) saga;
         mtaDefinitions.add(new FunctionContext(sagaFlatMap.getfB()));

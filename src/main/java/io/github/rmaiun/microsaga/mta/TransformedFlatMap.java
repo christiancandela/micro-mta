@@ -9,9 +9,9 @@ import java.util.function.Function;
  *
  */
 public interface TransformedFlatMap<A, B, C> extends MTA<C> {
-    Function<A, MTA<B>> getSagaFunc();
+    Function<A, MTA<B>> getFunction();
 
     BiFunction<A, B, C> getTransformer();
 
-    StubInputFunction<MTA<A>> getRootSaga();
+    StubInputFunction<MTA<A>> getRootMTA();
 }

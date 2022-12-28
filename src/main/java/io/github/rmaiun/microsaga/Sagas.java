@@ -9,7 +9,6 @@ import io.github.rmaiun.microsaga.saga.SagaFlatMap;
 import io.github.rmaiun.microsaga.saga.SagaSuccess;
 import io.github.rmaiun.microsaga.support.NoResult;
 import io.github.rmaiun.microsaga.util.Utils;
-import net.jodah.failsafe.RetryPolicy;
 
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -25,43 +24,27 @@ public class Sagas {
   }
 
   public static <A> SagaAction<A> action(String name, Callable<A> action) {
-    return new SagaAction<>(name, sagaId -> action.call(), Utils.INSTANCE.defaultNoneRetryPolicy());
+    return new SagaAction<>(name, sagaId -> action.call());
   }
 
   public static <A> SagaAction<A> action(String name, CheckedFunction<String, A> action) {
-    return new SagaAction<>(name, action, Utils.INSTANCE.defaultNoneRetryPolicy());
-  }
-
-  public static <A> SagaAction<A> retryableAction(String name, Callable<A> action, RetryPolicy<A> retryPolicy) {
-    return new SagaAction<>(name, Utils.INSTANCE.callableToCheckedFunc(action), retryPolicy);
-  }
-
-  public static <A> SagaAction<A> retryableAction(String name, CheckedFunction<String, A> action, RetryPolicy<A> retryPolicy) {
-    return new SagaAction<>(name, action, retryPolicy);
+    return new SagaAction<>(name, action);
   }
 
   public static SagaAction<NoResult> voidAction(String name, Runnable action) {
 
-    return new SagaAction<>(name, Utils.INSTANCE.runnableToCheckedFunc(action), Utils.INSTANCE.defaultNoneRetryPolicy());
+    return new SagaAction<>(name, Utils.INSTANCE.runnableToCheckedFunc(action));
   }
 
   public static SagaAction<NoResult> voidAction(String name, Consumer<String> action) {
 
-    return new SagaAction<>(name, Utils.INSTANCE.consumerToCheckedFunc(action), Utils.INSTANCE.defaultNoneRetryPolicy());
+    return new SagaAction<>(name, Utils.INSTANCE.consumerToCheckedFunc(action));
   }
 
   public static <A> SagaAction<A> actionThrows(String name, Throwable exception) {
     return new SagaAction<>(name, sagaId -> {
       throw exception;
-    }, Utils.INSTANCE.defaultNoneRetryPolicy());
-  }
-
-  public static SagaAction<NoResult> voidRetryableAction(String name, Runnable action, RetryPolicy<NoResult> retryPolicy) {
-    return new SagaAction<>(name, Utils.INSTANCE.runnableToCheckedFunc(action), retryPolicy);
-  }
-
-  public static SagaAction<NoResult> voidRetryableAction(String name, Consumer<String> action, RetryPolicy<NoResult> retryPolicy) {
-    return new SagaAction<>(name, Utils.INSTANCE.consumerToCheckedFunc(action), retryPolicy);
+    });
   }
 
   public static Compensation compensation(String name, Runnable compensator) {
@@ -70,14 +53,6 @@ public class Sagas {
 
   public static Compensation compensation(String name, Consumer<String> compensator) {
     return new Compensation(name, compensator, Utils.INSTANCE.defaultNoneRetryPolicy());
-  }
-
-  public static Compensation retryableCompensation(String name, Runnable compensator, RetryPolicy<Object> retryPolicy) {
-    return new Compensation(name, compensator, retryPolicy);
-  }
-
-  public static Compensation retryableCompensation(String name, Consumer<String> compensator, RetryPolicy<Object> retryPolicy) {
-    return new Compensation(name, compensator, retryPolicy);
   }
 
   public static Compensation emptyCompensation(String name) {

@@ -12,19 +12,19 @@ import java.util.function.Function;
  */
 public class NestedTransformedFlatMap<A, B, C> extends Nested<C> implements TransformedFlatMap<A, B, C> {
 
-  private final StubInputFunction<MTA<A>> rootSaga;
-  private final Function<A, MTA<B>> sagaFunc;
+  private final StubInputFunction<MTA<A>> rootMTA;
+  private final Function<A, MTA<B>> function;
   private final BiFunction<A, B, C> transformer;
 
-  public NestedTransformedFlatMap(StubInputFunction<MTA<A>> saga, Function<A, MTA<B>> sagaFunc, BiFunction<A, B, C> transformer) {
-    this.rootSaga = saga;
-    this.sagaFunc =sagaFunc;
+  public NestedTransformedFlatMap(StubInputFunction<MTA<A>> mta, Function<A, MTA<B>> function, BiFunction<A, B, C> transformer) {
+    this.rootMTA = mta;
+    this.function = function;
     this.transformer = transformer;
   }
 
   @Override
-  public Function<A, MTA<B>> getSagaFunc() {
-    return sagaFunc;
+  public Function<A, MTA<B>> getFunction() {
+    return function;
   }
 
   @Override
@@ -33,7 +33,7 @@ public class NestedTransformedFlatMap<A, B, C> extends Nested<C> implements Tran
   }
 
   @Override
-  public StubInputFunction<MTA<A>> getRootSaga() {
-    return rootSaga;
+  public StubInputFunction<MTA<A>> getRootMTA() {
+    return rootMTA;
   }
 }

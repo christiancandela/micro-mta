@@ -18,10 +18,10 @@ public class SagaAction<A> extends Saga<A> implements Action<A> {
   private final RetryPolicy<A> retryPolicy;
   private final CheckedFunction<String, A> action;
 
-  public SagaAction(String name, CheckedFunction<String, A> action, RetryPolicy<A> retryPolicy) {
+  public SagaAction(String name, CheckedFunction<String, A> action) {
     this.name = name;
     this.action = action;
-    this.retryPolicy = retryPolicy;
+    this.retryPolicy = Utils.INSTANCE.defaultNoneRetryPolicy();
   }
 
   public SagaStep<A> compensate(Compensation compensation) {
@@ -34,8 +34,7 @@ public class SagaAction<A> extends Saga<A> implements Action<A> {
   }
 
   public SagaStep<A> compensate(String name, Runnable compensation, RetryPolicy<Object> retryPolicy) {
-    return new SagaStep<>(this, CompensationBuilder.create().name(name).compensation(compensation)
-            .retryPolicy(retryPolicy).build() );
+    throw new RuntimeException("Un supported operation");
   }
 
   public SagaStep<A> compensate(String name, Consumer<String> compensation) {
@@ -44,8 +43,7 @@ public class SagaAction<A> extends Saga<A> implements Action<A> {
   }
 
   public SagaStep<A> compensate(String name, Consumer<String> compensation, RetryPolicy<Object> retryPolicy) {
-    return new SagaStep<>(this, CompensationBuilder.create().name(name).compensation(compensation)
-            .retryPolicy(retryPolicy).build() );
+    throw new RuntimeException("Un supported operation");
   }
 
   public SagaStep<A> withoutCompensation() {

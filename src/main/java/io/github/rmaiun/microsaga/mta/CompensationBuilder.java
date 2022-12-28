@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 public class CompensationBuilder {
     private String name;
     private Runnable compensation = () -> { };
-    private Consumer<String> compensation0 = sagaId -> compensation.run();
+    private Consumer<String> compensation0 = mtaId -> compensation.run();
     private RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxRetries(0);
     private boolean technical = false;
 
